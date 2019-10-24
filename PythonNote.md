@@ -838,3 +838,96 @@ os.mkdir(path,mode)	#以数字权限模式创建目录，默认0777（十八进�
 os.path.exists(path)	#如果路径path存在，返回true；否则返回false
 ```
 
+
+
+ https://docs.python-guide.org/writing/structure/ 
+
+# Structuring Your Project
+
+[Sample Repository](https://github.com/navdeep-G/samplemod)
+
+```
+README.rst
+LICENSE
+setup.py
+requirements.txt
+sample/__init__.py
+sample/core.py
+sample/helpers.py
+docs/conf.py
+docs/index.rst
+tests/test_basic.py
+tests/test_advanced.py
+```
+
+## Sample[`./sample/` or `./sample.py`]
+
+**核心代码**存放处
+
+## License[`./LICENSE`]
+
+如果不确定项目适合用哪一种**执照许可**，可参考[choosealicense.com](https://choosealicense.com/)
+
+不适用任何license发布代码当然也是可以的，只是可能会对一些想要使用代码的人造成潜在困扰
+
+## Setup.py[`./setup.py`]
+
+**对所需调用的包进行集中管理**
+
+[setup.py样例](https://github.com/navdeep-G/setup.py)
+
+## Requirements File[`./requirements.txt`]
+
+开发**依赖项**
+
+此依赖项安装可并入Setup.py文件
+
+具体写法格式见[Example Requirements File](https://pip.pypa.io/en/stable/reference/pip_install/#requirements-file-format)
+
+## Documentation[`./docs/`]
+
+软件包的相关参考文档
+
+别的文件路径下不应该有类似的文档
+
+## Test Suite[`./test_sample.py` or `./tests`]
+
+软件包整体与各功能单元的测试
+
+各个测试包必定需要调用不同的软件包，也包括很多额外的调试工具包，所以建议单独写一个文件`tests/context.py`，例如：
+
+```python
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import sample
+```
+
+之后在同级目录下的测试包中引用：
+
+```python
+from .context import sample
+```
+
+## Makefile[`./Makefile`]
+
+定义通用任务
+
+`Sample Makefile`
+
+```python
+init:
+    pip install -r requirements.txt
+
+test:
+    py.test tests
+
+.PHONY: init test
+```
+
+
+
+# Structure of Code
+
+> - 大量的循环依赖
