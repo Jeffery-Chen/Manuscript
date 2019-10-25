@@ -928,11 +928,54 @@ test:
 
 
 
-# Code Style
-
-
-
-
-
 # Testing Your Code
+
+## Tools
+
+### [py.test](https://docs.pytest.org/en/latest/)
+
+```shell
+$ pip install pytest
+```
+
+新建一个测试用文件`test_sample.py`
+
+```python
+# content of test_sample.py
+def func(x):
+    return x + 1
+
+def test_answer():
+    assert func(3) == 5
+```
+
+运行`py.test`
+
+```shell
+$ py.test
+```
+
+### [Hypothesis](https://hypothesis.readthedocs.io/en/latest/)
+
+```shell
+$ pip install hypothesis
+```
+
+### [tox](https://tox.readthedocs.io/en/latest/)
+
+```shell
+$ pip install tox
+```
+
+### [Unittest2](http://pypi.org/project/unittest2)
+
+```shell
+$ pip install unittest2
+```
+
+### [mock](http://www.voidspace.org.uk/python/mock/)
+
+```shell
+$ pip install mock
+```
 
