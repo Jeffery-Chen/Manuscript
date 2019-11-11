@@ -162,7 +162,7 @@ import pdb	'''为python自带包，提供了一种交互的源代码调试功能
 
 #### `def predict`
 
-定常速度模型（**constant velocity model**，一种用以定义**transition density**的处理模型）引自文中的式（14），$\zeta_k$为处理噪声，$T$为$k$与$k+1$之间的时间间隔
+定常速度模型（**constant velocity model**，一种用以定义**transition density**的处理模型）引自式（14），$\zeta_k$为处理噪声，$T$为$k$与$k+1$之间的时间间隔
 
 `noiseSD = 0.1`
 $$
@@ -227,7 +227,7 @@ for i in range(nu):
 
 ### `def initialize_newborn_A`
 
-原理引自文中式（74），用于初始化关联的新生粒子，目前使用的是一个**虚拟分布（dummy distribution）**，应用时还需改为实际服从的分布
+原理引自式（74），用于初始化关联的新生粒子，目前使用的是一个**虚拟分布（dummy distribution）**，应用时还需改为实际服从的分布
 $$
 x ^{(i,c)} _{A,k+1} \sim p ^{(c)} _{x _{k+1}} (\cdot | z ^{(c)} _{k+1})
 \tag{74}
@@ -235,12 +235,51 @@ $$
 
 ### `def initialize_newborn_UA`
 
-原理引自文中式（76）初始化无关联的新生粒子，目前使用的是一个**虚拟分布（dummy distribution）**，应用时还需改为实际服从的分布
+原理引自式（76）初始化无关联的新生粒子，目前使用的是一个**虚拟分布（dummy distribution）**，应用时还需改为实际服从的分布
 $$
 x ^{(i,c)} _{\overline{A},k+1} \sim b _{k+1}(\cdot)
 \tag{76}
 $$
 
+
+
+## 0. Particle Filter Functions
+
+模拟环境为与本车对向的两辆车辆以**10m/s**的速度驶来，栅格地图分辨率为**33cm**
+
+- 具体参数设置如下
+
+|       参数       |              描述              |      值       |
+| :--------------: | :----------------------------: | :-----------: |
+|      $p\_B$      |            出生概率            |     0.02      |
+|       $Vb$       |           新生粒子数           | $2\times10^4$ |
+|       $V$        |           原有粒子数           | $2\times10^5$ |
+|  $state\_size$   |          $p,v$ 状态数          |       4       |
+|     $alpha$      |          信息衰变因数          |      0.9      |
+|      $p\_A$      | 关联概率（仅与多普勒测量有关） |      1.0      |
+|       $T$        |        测量频率（10Hz）        |      0.1      |
+|      $p\_S$      |          粒子保留概率          |     0.99      |
+|      $res$       |           栅格分辨率           |      1.0      |
+|   $scale\_vel$   |          初始速度方差          |     12.0      |
+|   $scale\_acc$   |         初始加速度方差         |      2.0      |
+|  $process\_pos$  |            位置噪声            |     0.06      |
+|  $process\_vel$  |            速度噪声            |      2.4      |
+|  $process\_acc$  |           加速度噪声           |      0.2      |
+|    $verbose$     |        是否打印debug值         |     False     |
+|       $mS$       |            画图阈值            |      3.0      |
+|    $epsilon$     |              ...               |     10.0      |
+|  $epsilon\_occ$  |              ...               |     0.75      |
+| $index\_stopped$ |        粒子滤波中断索引        |       0       |
+
+- `get_dogma`保存动态栅格地图 $4\times128\times128$ 
+
+```python
+import numpy as np
+newDOGMA = np.stack((posO, posF, velX, velY, meas_grid))
+'''用以连接数组，但要求数组形状相同'''
+```
+
+- `dogma2head_grid`为绘图工具创建**heading grid**
 
 ## 1. Particle Prediction
 
@@ -254,16 +293,128 @@ $$
 
 为每一个栅格更新其对应的**Dempster-Shafer**概率密度函数值
 
+- 调用`Particle_Array`类下的`accumulate_weight`方法，累计粒子权重
+- 调用`Particle_Array`类下的`normalize_p_S`方法，以归一化超出阈值的粒子权重
+- 预测空闲栅格的概率密度（与静态地图相同），引自式（62）
+
+$$
+m ^{(c)} _{p,+} (F _{k+1}) = min \left[ 
+									\alpha (T) m ^{(c)} _k (F _k) , 1 - m ^{(c)} _{p,+} 
+									(O _{k+1})
+									\right]
+\tag{62}
+$$
+
+- 综合测量值与预测值计算后验占用与空闲栅格概率，引自式（63）
+
+$$
+m ^{(c)} _{k+1} = m ^{(c)} _{p,+} \oplus m ^{(c)} _{z _{k+1}}
+\tag{63}
+$$
+
+- 计算后验占用概率密度的新生部分，引自式（67）
+
+$$
+\rho ^{(c)} _{b,k+1} = \frac
+{m ^{(c)} _{k+1} (O _{k+1}) \cdot p _{B} \left[ 1 - m ^{(c)} _{p,+}(O _{k+1}) \right]}
+{m ^{(c)} _{p,+} (O _{k+1}) + p _{B} \left[ 1 - m ^{(c)} _{p,+}(O _{k+1}) \right]}
+\tag{67}
+$$
+
 ## 4. Update of Persistent Particles
 
+更新原有粒子概率
 
+- `update_unnorm`非归一化权重更新，引自式（69），详见`MeasCellArray`类
+
+- `accumulate_weight`累计非归一化原有权重
+- `calc_norm_assoc`引自式（72），`calc_norm_unassoc`引自式（73），详见`Particle`类下的`normalize`方法
 
 ## 5. Initialization of New Particles
 
+初始化新生粒子
 
+- `normalize_particle_orders`归一化新粒子数为定常值$v_b$
+- `calc_num_assoc`计算新生关联/非关联粒子，引自式（79）（80）
+
+$$
+\frac{v ^{(c)} _{A,k+1}}{v ^{(c)} _{\overline{A},k+1}} = 
+\frac{p ^{(c)} _{A,k+1}}{1-p ^{(c)} _{A,k+1}}
+\tag{79}
+$$
+
+$$
+v ^{(c)} _{A,k+1} + v ^{(c)} _{\overline{A},k+1} = v ^{(c)} _{b,k+1}
+\tag{80}
+$$
+
+
+
+- `calc_weight_assoc`计算新生关联/非关联粒子的权重，引自式（75）（77）
+
+$$
+\omega ^{(i,c)} _{A,k+1} = \frac{p ^{(c)} _{A,k+1} \cdot \rho ^{(c)} _{b,k+1}}
+{v ^{(c)} _{A,k+1}}
+\tag{75}
+$$
+
+$$
+\omega ^{(i,c)} _{\overline{A},k+1} = \frac{\left( 1-p^{(c)}_{A,k+1} \right) \cdot \rho^{(c)}_{b,k+1}}
+{v^{(c)}_{\overline{A},k+1}}
+\tag{77}
+$$
+
+- `initialize_new_particle_A` / `initialize_new_particle_UA`初始化关联/非关联粒子，引自式（74）/（76），详见`PaticleArray`类下的`initialize_newborn_A`以及`initialize_newborn_UA`方法
 
 ## 6. Statistical Moments of Grid Cells
 
+计算各个栅格的速度（均值与方差）
 
+- `mean_x_vel`&`mean_v_vel`计算均值，引自式（81）
+
+$$
+\overline{v}^{(c)}_{x} \approx \frac{1}{\rho^{(c)}_{p,k+1}} \sum^{v^{(c)}_{p,k+1}}_{i=1}
+\omega^{(i,c)}_{p,k+1} \cdot v^{(i,c)}_{x,p,k+1}
+\tag{81}
+$$
+
+- `var_x_vel`&`var_y_vel`计算方差，引自式（83）
+
+$$
+{\sigma ^{2}}^{(c)}_{v_{x}} \approx \frac{1}{\rho^{(c)}_{p,k+1}} \sum^{v^{(c)}_{p,k+1}}_{i=1}
+\omega^{(i,c)}_{p,k+1} \cdot \left( v^{(i,c)}_{x,p,k+1} \right)^{2} - {\left( \overline{v}^{(c)}_{x} \right)}^{2}
+\tag{83}
+$$
+
+- `covar_xy_vel`计算协方差，引自式（84）
+
+$$
+\sigma ^{(c)}_{v_{x},v_{y}} \approx \frac{1}{\rho^{(c)}_{p,k+1}} \sum^{v^{(c)}_{p,k+1}}_{i=1}
+\omega^{(i,c)}_{p,k+1} \cdot v^{(i,c)}_{x,p,k+1} \cdot \overline{v}^{(i,c)}_{y,p,k+1} - \overline{v}^{(c)}_{x} \cdot \overline{v}^{(c)}_{y}
+\tag{84}
+$$
 
 ## 7. Resampling
+
+在原有粒子与新生粒子集中进行重采样
+
+- `calc_resampled_indeces`计算重采样粒子的索引角标
+
+- [ ] > - [ ] 可能会因为**舍入误差（rounding error）**而不成立
+
+
+
+# 附录
+
+- `BBA` / `BPA`: Basic Belif Assignment / Basic Probability Assignment
+- `BBF`: Binary Bayes Filter
+- `BF`: Bernoulli Filter
+- `BOF`: Bayesian Occupancy Filter
+- `FISST`: Finite Set Statistics
+- `MIB`: Multi-Instance Bernoulli
+- `PHD`: Probability Hypothesis Density
+
+- `RFS`: Random Finite Set
+- `SLAMMOT`: Simultaneous Localization, Mapping,and Moving Object Tracking
+
+- `SMC`: Sequential Monte Carlo
