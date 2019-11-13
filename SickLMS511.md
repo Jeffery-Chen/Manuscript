@@ -64,7 +64,7 @@ $ rosrun rviz rviz
 
 
 
-## 调用激光雷达信息 `/scan`
+# 调用激光雷达信息 `/scan`
 
 ### 消息定义`sensor_msgs/LaserScan.msg`
 
@@ -186,4 +186,35 @@ int main(int argc, char** argv)
 `scan_to_cloud_filter_chain`
 
  ![scan_to_cloud_filter_chain.png](SickLMS511.assets/scan_to_cloud_filter_chain.png) 
+
+
+
+# 占用栅格地图
+
+## [grid_map](https://github.com/anybotics/grid_map#parameters)
+
+### 栅格地图信息定义
+
+`nav_msgs/OccupancyGrid.msg`
+
+```cpp
+'用以表示2D占用栅格地图'
+std_msgs/Header header
+nav_msgs/MapMetaData info
+int8[] data		'地图数据，按行排序，始于(0,0)，占用概率[0,100]，未知=-1'
+```
+
+使用rivz可视化时需订阅话题 `grid_map_msgs/GridMap.msg`
+
+```cpp
+'用于栅格地图可视化'
+grid_map_msgs/GridMapInfo info		
+string[] layers						'栅格地图层'
+string[] basic_layers				'可选项，栅格地图基础层，用以确定不同图层的有效性'
+std_msgs/Float32MultiArray[] data	'栅格地图数据'
+uint16 outer_start_index			'起始行角标，默认0'
+uint16 inner_start_index			'起始列角标，默认0'
+```
+
+## [costmap_2d](http://wiki.ros.org/costmap_2d)
 
