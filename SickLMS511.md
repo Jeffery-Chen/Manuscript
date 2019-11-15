@@ -24,7 +24,7 @@ $ cd  ~/erobot_ws/src
 $ catkin_create_pkg laser_node std_msgs rospy roscpp
 $ rm -rf laser_node/*
 $ cd laser_node
-$ git clone https://github.com/NatanBiesmans/lms5xx
+$ git clone git@github.com:Jeffery-Chen/lms5xx.git
 ```
 
 > - 将源文件**src**中的**lms5xx_node.cpp**激光雷达IP（ip_add）改为自己的IP（192.168.12.140）
