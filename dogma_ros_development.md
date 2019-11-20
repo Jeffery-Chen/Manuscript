@@ -207,3 +207,91 @@ if __name__ == '__main__':
 
 > `pkg`小心误键入空格
 
+### 使用参数
+
+#### 操作参数
+
+- 获取参数`rospy.get_param(param_name)`
+
+```python
+# 获取全局参数
+rospy.get_param('/global_param_name')
+# 获取目前命名空间的参数
+rospy.get_param('param_name')
+# 获取私有命名空间参数
+rospy.get_param('~private_param_name')
+# 获取参数，如果没，使用默认值
+rospy.get_param('foo', 'default_value')
+```
+
+- 设置参数` rospy.set_param(param_name, param_value) `
+
+```python
+rospy.set_param('some_numbers', [1., 2., 3., 4.])
+rospy.set_param('truth', True)
+rospy.set_param('~private_bar', 1+2)
+```
+
+- 删除参数` rospy.delete_param('param_name') `
+
+```python
+rospy.delete_param('to_delete')
+```
+
+- 判断参数是否存在` rospy.has_param('param_name') `
+
+```python
+if rospy.has_param('to_delete'):
+    rospy.delete_param('to_delete')
+```
+
+#### 解释参数名
+
+- 获取参数的实际名称（被映射成不同名）`rospy.resolve_name(name)`
+
+```python
+value = rospy.get_param('~foo')
+rospy.loginfo('Parameter %s has value %s', rospy.resolve_name('~foo'), value)
+```
+
+#### 搜索参数
+
+- 当不知道命名空间时，可由私有命名空间开始向上到全局命名空间` rospy.search_param(param_name) `
+
+```python
+full_param_name = rospy.search_param('foo')
+param_value = rospy.get_param(full_param_name)
+```
+
+### ROS日志
+
+#### 写入日志API
+
+```python
+rospy.logdebug(msg, *args)
+rospy.logwarn(msg, *args)
+rospy.loginfo(msg, *args)
+rospy.logerr(msg, *args)
+rospy.logfatal(msg, *args)
+```
+
+当你看到一个消息输出在`stdout`不在`/rosout`，很可能是初始化未完成，或者忘记调用`rospy.init_node` 
+
+节点日志文件路径一般为：
+
+`ROS_ROOT/log`或者`~/.ros/log`
+
+```
+DEBUG = 1
+ERROR = 8
+FATAL = 16
+INFO = 2
+WARN = 4
+```
+
+如果要显示错误，首先需要监听`rosout`节点，
+
+```shell
+$ rostopic echo /rosout
+```
+
