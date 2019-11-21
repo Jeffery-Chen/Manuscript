@@ -149,6 +149,10 @@ from std_msgs.msg import String
 def talker():
     pub = rospy.Publisher('chatter', String, queue_size=10)     
     # Classes--发布主题为chatter，类型为std_msgs.msg.String，队列条目数为10
+    # 如果以固定速率发送信息，可以使用较小的发送频率；在突发多个消息的情况下应保证队列足够大
+    # 例如发送频率在10Hz左右，设置1~3的队列大小是很合适的
+    # queue_size=1 适用于传感器数据，即有了新信息就不发送旧信息
+    # queue_size>10 适用于用户界面信息或想要记录所有已发布的值
     rospy.init_node("talker", anonymous=True)                   
     # Functions--初始化ros节点talker，若anonymous=True则该节点无法remap
     rate = rospy.Rate(10)                                       
@@ -294,4 +298,55 @@ WARN = 4
 ```shell
 $ rostopic echo /rosout
 ```
+
+### 脚本安装与模块导入
+
+`Makefile`规定了工程源文件中的编译顺序（自动化编译，对于`ROS`工作空间即自动生成`message`和`service`代码）
+
+如果需要导入自定义模块，最通用的方法是定义一个安装程序，将该模块移动到`PYTHONPATH`，具体方法如下：
+
+- 在包根目录下（如`/my_pkg`）创建`__init__.py`
+- 在包根目录下（如`/my_pkg`）创建`setup.py`
+
+```python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# setup.py是供catkin使用的，手动调用该文件可能会破坏你的ROS安装
+
+from distutils.core import setup
+# 不推荐setuptools，它会在src中生成文件egg-info
+from catkin_pkg.python_setup import generate_distutils_setup
+#使用generate_distutils_setup函数读取package.xml文件中的值，并作一些转换
+
+setup_args = generate_distutils_setup(
+    packages = ['tutorial_package'],
+    package_dir = {'': 'src'},
+    # 罗列并不在package.xml文件中的信息：引入的python包的路径为src/tutorial_package/
+)
+
+setup(**setup_args)
+```
+
+- 为了让`catkin`找到并使用`setup.py`，需要去掉`CMakeList.txt`中的注释
+
+```
+## Uncomment this if the package has a setup.py. This macro ensures
+## modules and global scripts declared therein get installed
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
+ catkin_python_setup()
+```
+
+- 为保证将包安装于正确路径，需要再修改`CMakeList.txt`
+
+```
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+ install(PROGRAMS
+   bin/hello	# 运行的主函数hello.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
+```
+
+- 回到工作空间目录下，编译包，之后便可使用`rosrun`执行自定义脚本与模块
 
