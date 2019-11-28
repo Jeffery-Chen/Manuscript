@@ -134,6 +134,14 @@ catkin_package(
 )
 ```
 
+#### rospy & roslib
+
+对于`python`开发者而言，`roslib`与`rospy`提供的功能相近，如需使用`roslib`只需调用一下命令：
+
+```python
+import roslib; roslib.load_manifest('YOUR_PACKAGE_NAME')
+```
+
 #### 发布器
 
 [rospyAPI接口](docs.ros.org/api/rospy/html/)
@@ -149,7 +157,7 @@ from std_msgs.msg import String
 def talker():
     pub = rospy.Publisher('chatter', String, queue_size=10)     
     # Classes--发布主题为chatter，类型为std_msgs.msg.String，队列条目数为10
-    # 如果以固定速率发送信息，可以使用较小的发送频率；在突发多个消息的情况下应保证队列足够大
+    # 如果以固定速率发送信息，可以使用较小的队列大小；在突发多个消息的情况下应保证队列足够大
     # 例如发送频率在10Hz左右，设置1~3的队列大小是很合适的
     # queue_size=1 适用于传感器数据，即有了新信息就不发送旧信息
     # queue_size>10 适用于用户界面信息或想要记录所有已发布的值
@@ -197,7 +205,7 @@ if __name__ == '__main__':
     listener()
 ```
 
-#### 启动文件
+### 启动文件
 
 在`beginner_tutorials`下新建`launch`文件夹用于存放启动文件`talker_and_listener.launch`
 
