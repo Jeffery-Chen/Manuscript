@@ -2,7 +2,7 @@
 
 [利用Python来编写ROS程序](https://www.ncnynl.com/archives/201611/1055.html)
 
-## 学习笔记
+## ros笔记
 
 ### 自定义package.xml
 
@@ -357,4 +357,10 @@ setup(**setup_args)
 ```
 
 - 回到工作空间目录下，编译包，之后便可使用`rosrun`执行自定义脚本与模块
+
+## [costmap_2d](http://wiki.ros.org/costmap_2d)
+
+### bresenham算法
+
+描绘由两点所决定的直线，用以填充由激光雷达的位置到障碍物之间的栅格概率
 

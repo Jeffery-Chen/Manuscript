@@ -218,3 +218,44 @@ uint16 inner_start_index			'起始列角标，默认0'
 
 ## [costmap_2d](http://wiki.ros.org/costmap_2d)
 
+代价计算公式
+$$
+cost = (253-1)e^{cost\_scaling\_factor \times(distance-inscribed\_radius)} 
+$$
+
+### 地图（MasterMap）分层
+
+MasterMap由`LayeredCostmap`类下的`Costmap2D costmap_`维护
+
+- StaticLayer静态地图层与ObstacleLayer障碍物层
+
+  由继承于`Costmap2D`的`StaticLayer`、`ObstacleLayer`、`VoxelLayer`维护
+
+- InflationLayer膨胀层
+
+  没有继承`Costmap2D`是因为不需要维护一张自己的地图，直接操作`MasterMap`中的数据即可
+
+- 自定义障碍物
+
+  可以添加至第四层，接口为`costmap_2d::Costmap2DROS`，使用`pluginlib`实例化并添加至`costmap_2d::LayeredCostmap`，各层独立编译
+
+### 地图更新[layered_costmap.cpp]
+
+costmap更新在mapUpdateLoop线程中，共分为两个阶段
+
+- UpdateBounds
+
+  只更新每一层变化的部分，StaticMap只在第一次更新；ObstacleMap主要更新ObstacleLayer的数据，再更新Bounds；而InflationLayer则与上一次的矩形框保持一致
+
+- UpdateCosts
+
+  将各层数据逐一拷贝至MasterMap，每个`plugin`调用自己代表层的`UpdateCosts`方法
+
+  - StaticLayer和ObstacleLayer
+
+    调用`updateWithOverwrite` `updateWithTrueOverWrite` `updateWithMax`等方法
+
+  - InflationLayer
+
+    调用`InflationLayer::updateCosts`，实现对障碍物的膨胀操作
+
